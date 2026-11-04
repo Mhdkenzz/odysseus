@@ -1,6 +1,6 @@
 # Use a Kaggle GPU model with Odysseus
 
-This setup runs Qwen2.5 3B Instruct on a Kaggle GPU and gives Odysseus a
+This setup runs Qwen3.6-35B-A3B on Kaggle's two T4 GPUs and gives Odysseus a
 temporary OpenAI-compatible endpoint through a Cloudflare Quick Tunnel. Kaggle
 sessions and Quick Tunnel URLs are temporary: keep the notebook running, and
 repeat the connection steps whenever Kaggle restarts it.
@@ -15,23 +15,23 @@ repeat the connection steps whenever Kaggle restarts it.
    its output contains the key.
 
 The setup cell downloads `scripts/kaggle_llm_server.py` from this repository's
-`dev` branch, installs the small serving dependencies, downloads the model, and
-starts an authenticated API and tunnel. The default model is
-`Qwen/Qwen2.5-3B-Instruct`, which fits typical 16 GB Kaggle GPUs in FP16. Set
-`ODYSSEUS_MODEL_ID` in the notebook cell if you want to use another compatible
-Transformers chat model.
+`dev` branch, builds the official llama.cpp server with CUDA, downloads the
+Qwen GGUF quantization, and starts an authenticated API and tunnel. It uses the
+`UD-Q4_K_M` quant (about 22 GB) so the model's weights fit across the two T4
+GPUs. The notebook limits context to 8,192 tokens to leave room for the KV
+cache and server overhead.
 
 ## Add the endpoint in Odysseus
 
 In Odysseus, open **Settings → Models → Add endpoint** and enter:
 
-- Name: `Kaggle GPU`
+- Name: `Kaggle GPU Qwen3.6`
 - Base URL: the notebook's printed URL ending in `/v1`
 - API key: the notebook's printed bearer key
 - Endpoint type: `OpenAI-compatible`
 
 Save the endpoint, refresh its model list, and choose
-`Qwen/Qwen2.5-3B-Instruct` in the chat model picker. Prompts sent to that model
+`Qwen/Qwen3.6-35B-A3B` in the chat model picker. Prompts sent to that model
 will travel from Odysseus to Kaggle through the tunnel and be processed by the
 GPU.
 
