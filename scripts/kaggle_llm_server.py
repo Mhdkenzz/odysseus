@@ -13,6 +13,7 @@ WORK_DIR = Path(os.environ.get("ODYSSEUS_KAGGLE_WORK", "/kaggle/working"))
 LLAMA_DIR = WORK_DIR / "llama.cpp"
 BUILD_DIR = LLAMA_DIR / "build"
 SERVER = BUILD_DIR / "bin" / "llama-server"
+CUDA_DRIVER_SHIM = WORK_DIR / "cuda-driver-target.cmake"
 API_KEY_FILE = Path(os.environ.get("ODYSSEUS_API_KEY_FILE", "/tmp/odysseus-api-key"))
 MODEL_REPO = "unsloth/Qwen3.6-35B-A3B-GGUF"
 MODEL_QUANT = "UD-Q4_K_M"
@@ -33,11 +34,21 @@ def main() -> None:
     if not LLAMA_DIR.exists():
         run(["git", "clone", "--depth", "1", "https://github.com/ggml-org/llama.cpp.git", str(LLAMA_DIR)])
     if not SERVER.exists():
+        # Kaggle exposes its driver through CUDA's compatibility directory,
+        # which CMake's FindCUDAToolkit may not discover as CUDA::cuda_driver.
+        CUDA_DRIVER_SHIM.write_text(
+            'if(NOT TARGET CUDA::cuda_driver)\n'
+            '  add_library(CUDA::cuda_driver SHARED IMPORTED GLOBAL)\n'
+            '  set_target_properties(CUDA::cuda_driver PROPERTIES '
+            'IMPORTED_LOCATION "/usr/local/cuda/compat/libcuda.so.1")\n'
+            'endif()\n'
+        )
         run([
             "cmake", "-S", str(LLAMA_DIR), "-B", str(BUILD_DIR),
             "-DGGML_CUDA=ON",
             "-DCMAKE_CUDA_ARCHITECTURES=75",
             "-DCMAKE_BUILD_TYPE=Release",
+            f"-DCMAKE_PROJECT_INCLUDE={CUDA_DRIVER_SHIM}",
         ])
         run(["cmake", "--build", str(BUILD_DIR), "--config", "Release", "--target", "llama-server", "-j", "4"])
 
