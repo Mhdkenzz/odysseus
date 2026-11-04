@@ -17,9 +17,9 @@ repeat the connection steps whenever Kaggle restarts it.
 The setup cell downloads `scripts/kaggle_llm_server.py` from this repository's
 `dev` branch, builds the official llama.cpp server with CUDA, downloads the
 Qwen GGUF quantization, and starts an authenticated API and tunnel. It uses the
-`UD-Q4_K_M` quant (about 22 GB) so the model's weights fit across the two T4
-GPUs. The notebook limits context to 8,192 tokens to leave room for the KV
-cache and server overhead.
+`UD-Q3_K_M` quant (about 16.6 GB), which fits Kaggle's notebook working volume
+alongside the build artifacts. The notebook limits context to 8,192 tokens to
+leave room for the KV cache and server overhead.
 
 ## Add the endpoint in Odysseus
 

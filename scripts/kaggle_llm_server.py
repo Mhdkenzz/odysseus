@@ -16,7 +16,9 @@ SERVER = BUILD_DIR / "bin" / "llama-server"
 CUDA_DRIVER_SHIM = WORK_DIR / "cuda-driver-target.cmake"
 API_KEY_FILE = Path(os.environ.get("ODYSSEUS_API_KEY_FILE", "/tmp/odysseus-api-key"))
 MODEL_REPO = "unsloth/Qwen3.6-35B-A3B-GGUF"
-MODEL_QUANT = "UD-Q4_K_M"
+# Kaggle's notebook working volume is about 19.5 GiB, so use the 16.6 GB
+# Q3_K_M file; the 22.1 GB Q4_K_M file cannot fit alongside the build artifacts.
+MODEL_QUANT = "UD-Q3_K_M"
 MODEL_ALIAS = "Qwen/Qwen3.6-35B-A3B"
 
 
