@@ -642,10 +642,10 @@ function isFeatherlessEndpoint(ep) {
   }
 }
 
-function endpointDetailHtml(ep, category) {
+function endpointDetailHtml(ep) {
   const showUrl = shouldDisplayEndpointBaseUrl(ep);
-  const copyBtn = (showUrl && category === 'local')
-    ? `<button type="button" class="admin-ep-copy-btn" data-adm-copy-url="${esc(ep.base_url)}" title="Copy URL" aria-label="Copy URL" style="background:none;border:none;padding:0 2px;margin-left:6px;cursor:pointer;color:inherit;opacity:0.45;vertical-align:-2px;line-height:1;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>`
+  const copyBtn = showUrl
+    ? `<button type="button" class="admin-ep-copy-btn" data-adm-copy-url="${esc(ep.base_url)}" title="Copy API base URL" aria-label="Copy API base URL" style="background:none;border:none;padding:3px 5px;margin-left:4px;cursor:pointer;color:inherit;opacity:0.65;vertical-align:middle;line-height:1;border-radius:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>`
     : '';
   const keyLabel = ep.has_key
     ? (ep.api_key_fingerprint ? ` (key ${esc(ep.api_key_fingerprint)})` : ' (key set)')
@@ -1097,7 +1097,7 @@ async function loadEndpoints() {
             <button type="button" class="admin-btn-sm" data-adm-chatgpt-reconnect="${esc(ep.provider_auth_id)}" data-chatgpt-endpoint-id="${esc(ep.id)}">Reconnect</button>
           </div>
           <div id="adm-chatgpt-usage-${esc(ep.id)}" class="adm-chatgpt-usage-host${isUsageExpanded ? '' : ' hidden'}" data-adm-chatgpt-usage-host="${esc(ep.provider_auth_id)}" data-chatgpt-endpoint-id="${esc(ep.id)}"${isUsageExpanded ? '' : ' style="display:none;"'}><div class="adm-chatgpt-usage adm-chatgpt-usage-loading"><div class="adm-chatgpt-usage-status">Loading usage...</div></div></div>` : ''}
-          ${endpointDetailHtml(ep, category)}
+          ${endpointDetailHtml(ep)}
           ${hasModels ? `<div class="mcp-tools-panel hidden" data-adm-ep-models-panel="${ep.id}"></div>` : ''}
         </div>`;
     });
@@ -1732,7 +1732,7 @@ function initEndpointForm() {
       if (addBtn) {
         addBtn.disabled = false;
         addBtn.textContent = 'Add';
-        addBtn.style.width = '55px';
+        addBtn.style.width = '88px';
         addBtn.style.display = '';
       }
       if (kindSel) kindSel.value = 'api';
@@ -1743,7 +1743,7 @@ function initEndpointForm() {
     } else {
       if (_chatgptLabelMode) urlInput.value = '';
       _chatgptLabelMode = false;
-      urlInput.placeholder = 'Base URL or pick provider';
+      urlInput.placeholder = 'https://your-server.example/v1';
       urlInput.readOnly = false;
       urlInput.removeAttribute('maxlength');
       urlInput.setAttribute('aria-label', 'Model endpoint URL');
@@ -1758,8 +1758,8 @@ function initEndpointForm() {
       }
       if (addBtn) {
         addBtn.disabled = false;
-        addBtn.textContent = 'Add';
-        addBtn.style.width = '55px';
+        addBtn.textContent = 'Connect';
+        addBtn.style.width = '88px';
         addBtn.style.display = '';
       }
       if (msg) {
@@ -1839,6 +1839,23 @@ function initEndpointForm() {
       _syncPickerCurrent();
     }
   });
+  const pasteUrlBtn = el('adm-epPasteUrlBtn');
+  if (pasteUrlBtn) {
+    pasteUrlBtn.addEventListener('click', async () => {
+      const help = el('adm-epUrlHelp');
+      try {
+        const value = (await navigator.clipboard.readText()).trim();
+        if (!value) throw new Error('empty clipboard');
+        urlInput.value = value;
+        urlInput.dispatchEvent(new Event('input', { bubbles: true }));
+        urlInput.focus();
+        if (help) help.textContent = 'URL pasted. Add the API key if required, then connect.';
+      } catch (_) {
+        urlInput.focus();
+        if (help) help.textContent = 'Click the URL field and press Ctrl+V (or ⌘V) to paste.';
+      }
+    });
+  }
   if (kindSel) kindSel.value = kindSel.value || 'api';
   function _apiEndpointKind() {
     return (kindSel && kindSel.value) ? kindSel.value : 'api';
@@ -1997,7 +2014,7 @@ function initEndpointForm() {
     // Normalize URL (fix typos, add /v1, strip wrong paths)
     const url = provider.value && rawUrl === provider.value ? rawUrl : _normalizeBaseUrl(rawUrl);
     const btn = el('adm-epAddBtn');
-    btn.disabled = true; btn.textContent = 'Adding...';
+    btn.disabled = true; btn.textContent = 'Connecting...';
     try {
       const fd = new FormData();
       fd.append('base_url', url);
@@ -2019,6 +2036,8 @@ function initEndpointForm() {
       if (res.ok) {
         const count = d.models ? d.models.length : 0;
         urlInput.value = ''; urlInput.style.display = '';
+        const urlHelp = el('adm-epUrlHelp');
+        if (urlHelp) urlHelp.textContent = 'Paste the base URL for your API (usually ends in /v1). The full chat URL is added automatically.';
         el('adm-epApiKey').value = ''; provider.value = '';
         if (kindSel) kindSel.value = 'proxy';
         if (epType) epType.value = 'llm';
@@ -2042,7 +2061,7 @@ function initEndpointForm() {
         }
       } else { msg.textContent = d.detail || 'Failed'; msg.className = 'admin-error'; }
     } catch (e) { msg.textContent = 'Request failed'; msg.className = 'admin-error'; }
-    btn.disabled = false; btn.textContent = 'Add';
+    btn.disabled = false; btn.textContent = 'Connect';
   });
 
   async function _startProviderDeviceAuth(providerKey, triggerEl = null) {

@@ -450,6 +450,40 @@
 
 /* Custom provider picker (logo + name) replacing the native <select> */
 .adm-provider-picker { position: relative; margin-bottom: 6px; }
+.adm-api-url-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 6px;
+}
+.adm-api-url-header > label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.adm-api-url-header .adm-provider-picker { flex: 0 0 auto; margin: 0; }
+.adm-api-url-header .adm-provider-btn { width: 150px; }
+.adm-api-url-row { flex-wrap: nowrap; }
+.adm-api-url-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 38px;
+  box-sizing: border-box;
+  font-size: 13px;
+}
+.adm-api-paste-btn { min-height: 38px; }
+.adm-api-url-help {
+  margin: 5px 0 12px;
+  color: var(--fg);
+  opacity: 0.58;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.adm-api-url-help code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
 .adm-provider-combo {
   display: flex;
   align-items: stretch;
@@ -747,6 +781,10 @@ span[id$="-logo"] svg:not([width]) {
 @media (max-width: 540px) {
   .admin-model-form-row input { flex-basis: 100%; }
   .admin-model-form-row .admin-btn-add { margin-left: auto; }
+  .adm-api-url-row { flex-wrap: wrap; }
+  .adm-api-url-row input { flex-basis: 100%; }
+  .adm-api-url-row .adm-api-paste-btn { margin-left: auto; }
+  .adm-api-url-header .adm-provider-btn { width: 132px; }
 }
 .adm-ep-inline-msg {
   min-height: 16px;
