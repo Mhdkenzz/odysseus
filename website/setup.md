@@ -14,17 +14,14 @@ Defaults work out of the box: clone, run, then configure models/search/email
 inside **Settings**. Only edit `.env` for deployment-level overrides like
 `APP_BIND`, `APP_PORT`, `AUTH_ENABLED`, `DATABASE_URL`, or a pre-seeded admin password.
 
-On first setup, Odysseus creates an admin account (`admin` unless
-`ODYSSEUS_ADMIN_USER` is set) and prints a temporary password in the terminal.
-For Docker installs, the same line is in `docker compose logs odysseus`.
-Use that for the first login, then change it in **Settings**.
+Sign-in is disabled by default for a single-user local workspace. Odysseus asks
+what name to show in the sidebar; click your name there to change it later.
 
-For a one-user install bound to this machine, set `LOCALHOST_BYPASS=true` in
-`.env` and keep `APP_BIND=127.0.0.1`. The sign-in screen is skipped for direct
-loopback requests, and Odysseus asks for a local display name. Click your name
-in the sidebar to change it later. This trusts local programs as you; forwarded
-requests still require login. Keep `LOCALHOST_BYPASS=false` for LAN, proxy, or
-other shared deployments.
+Before allowing LAN, proxy, or internet access, set `AUTH_ENABLED=true` in
+`.env` and keep `LOCALHOST_BYPASS=false`. The sign-in and account setup flow is
+then enabled. `LOCALHOST_BYPASS=true` is an optional development setting for
+skipping sign-in on direct loopback requests only; forwarded requests still
+require login.
 
 Contributing? See [CONTRIBUTING.md](https://github.com/odysseus-dev/odysseus/blob/dev/CONTRIBUTING.md) for setup, testing, and pull request guidelines.
 
@@ -99,7 +96,7 @@ ODYSSEUS_HOST=0.0.0.0 ./start-macos.sh
 The script also reads `.env` at startup, so `APP_BIND=0.0.0.0` and `APP_PORT`
 set there are picked up automatically without a command-line override each run.
 
-Keep `AUTH_ENABLED=true` (the default) before binding outside loopback. Do not
+Set `AUTH_ENABLED=true` before binding outside loopback. Do not
 expose this port directly to the public internet. To build a clickable app wrapper:
 
 ```bash
@@ -512,7 +509,7 @@ current limitation and the planned integration direction.
 ## Security Notes
 Odysseus is a self-hosted workspace with powerful local tools: shell access, file uploads, model downloads, web research, email/calendar integrations, and API tokens. Treat it like an admin console.
 
-- Keep `AUTH_ENABLED=true` for any network-accessible deployment.
+- Sign-in is disabled by default. Set `AUTH_ENABLED=true` before allowing LAN, proxy, or internet access.
 - Keep `LOCALHOST_BYPASS=false` outside local development.
 - Leave `SECURE_COOKIES` unset unless you need to override it: session cookies are marked `Secure` whenever the request arrives over HTTPS. Use `SECURE_COOKIES=true` to force it on for a proxy whose scheme Odysseus cannot see, or `SECURE_COOKIES=false` to force it off while you still serve plain HTTP alongside HTTPS.
 - Do not expose it directly to the public internet without HTTPS and a trusted reverse proxy or private access layer.
@@ -724,7 +721,7 @@ Key settings:
 | `APP_PORT` | `7000` | Docker Compose host port for the web UI. |
 | `APP_DATA_DIR` | `./data` | Docker Compose host directory for application data volumes. |
 | `APP_LOGS_DIR` | `./logs` | Docker Compose host directory for application logs. |
-| `AUTH_ENABLED` | `true` | Enable/disable login |
+| `AUTH_ENABLED` | `false` | Enable sign-in. Turn it on before allowing LAN, proxy, or internet access. |
 | `LOCALHOST_BYPASS` | `false` | Development-only auth bypass for loopback requests. Keep false for shared/network deployments. |
 | `ALLOWED_ORIGINS` | `http://localhost,http://127.0.0.1` | Comma-separated exact permitted origins for cross-origin browser/API clients. |
 | `SECURE_COOKIES` | derived from the request scheme | Marks session cookies `Secure` on HTTPS requests. Set true to force it on, false to force it off. |

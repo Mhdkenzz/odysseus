@@ -67,9 +67,9 @@ Help is welcome. The best entry points are fresh-install testing, provider setup
 
 ## Security
 
-Odysseus is a self-hosted workspace with powerful local tools. Keep auth enabled, keep private data out of Git, and do not expose raw model/service ports publicly.
+Odysseus is a self-hosted workspace with powerful local tools. Keep private data out of Git, and do not expose raw model/service ports publicly.
 
-- Keep `AUTH_ENABLED=true` for any network-accessible deployment.
+- Sign-in is disabled by default for a single-user install bound to loopback. Set `AUTH_ENABLED=true` before allowing LAN, proxy, or internet access.
 - Keep `LOCALHOST_BYPASS=false` outside local development.
 
 Deployment details are in the [setup guide](website/setup.md#security-notes).

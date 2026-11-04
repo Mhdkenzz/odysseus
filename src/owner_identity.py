@@ -15,8 +15,8 @@ RESERVED_AUTH_USERNAMES = REQUEST_SENTINEL_OWNERS | {DEFAULT_LOCAL_OWNER}
 
 
 def auth_disabled() -> bool:
-    """Return True only when auth is explicitly disabled by configuration."""
-    return os.getenv("AUTH_ENABLED", "true").strip().lower() == "false"
+    """Return True when sign-in is disabled (the default single-user mode)."""
+    return os.getenv("AUTH_ENABLED", "false").strip().lower() == "false"
 
 
 def normalize_owner(owner: str | None) -> Optional[str]:

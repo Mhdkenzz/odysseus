@@ -134,7 +134,7 @@ def test_readme_native_quickstart_uses_loopback():
 
 def test_readme_warns_auth_enabled_for_network_access():
     readme = Path("README.md").read_text(encoding="utf-8")
-    assert "Keep `AUTH_ENABLED=true` for any network-accessible deployment." in readme
+    assert "Set `AUTH_ENABLED=true` before allowing LAN, proxy, or internet access." in readme
     assert "Keep `LOCALHOST_BYPASS=false` outside local development." in readme
 
 
