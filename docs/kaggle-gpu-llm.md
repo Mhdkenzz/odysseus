@@ -15,11 +15,10 @@ repeat the connection steps whenever Kaggle restarts it.
    its output contains the key.
 
 The setup cell downloads `scripts/kaggle_llm_server.py` from this repository's
-`dev` branch, builds the official llama.cpp server with CUDA, downloads the
-Qwen GGUF quantization, and starts an authenticated API and tunnel. It uses the
-`UD-Q3_K_M` quant (about 16.6 GB), which fits Kaggle's notebook working volume
-alongside the build artifacts. The notebook limits context to 8,192 tokens to
-leave room for the KV cache and server overhead.
+`dev` branch, fetches the official llama.cpp CUDA 13.4 release binaries, and
+downloads the Qwen GGUF quantization. It uses the `UD-Q3_K_M` quant (about
+16.6 GB), which fits Kaggle's notebook working volume. The notebook limits
+context to 8,192 tokens to leave room for the KV cache and server overhead.
 
 ## Add the endpoint in Odysseus
 
