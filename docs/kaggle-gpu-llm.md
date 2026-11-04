@@ -8,17 +8,20 @@ repeat the connection steps whenever Kaggle restarts it.
 ## Start the Kaggle server
 
 1. Open the private Kaggle notebook **Odysseus GPU LLM + Cloudflare Tunnel**.
-2. In **Settings → Accelerator**, choose a GPU, and make sure **Internet** is
-   enabled. Save the settings and restart the session if Kaggle asks.
+2. In **Settings → Accelerator**, choose **GPU T4 x2**, and make sure
+   **Internet** is enabled. Save the settings and restart the session if Kaggle
+   asks.
 3. Run the notebook's setup cell and wait for its `READY` message. It prints a
    base URL ending in `/v1` and a bearer API key. Keep this notebook private;
    its output contains the key.
 
 The setup cell downloads `scripts/kaggle_llm_server.py` from this repository's
-`dev` branch, fetches the official llama.cpp CUDA 13.4 release binaries, and
+`dev` branch, fetches the official llama.cpp CUDA 12.8 release binaries, and
 downloads the Qwen GGUF quantization. It uses the `UD-Q3_K_M` quant (about
 16.6 GB), which fits Kaggle's notebook working volume. The notebook limits
 context to 8,192 tokens to leave room for the KV cache and server overhead.
+CUDA 12.8 stays within the PTX support provided by Kaggle's T4 driver; the
+server also disables CUDA PDL for T4 compatibility.
 
 ## Add the endpoint in Odysseus
 

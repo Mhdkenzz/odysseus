@@ -14,7 +14,8 @@ WORK_DIR = Path(os.environ.get("ODYSSEUS_KAGGLE_WORK", "/kaggle/working"))
 RELEASE = "b12110"
 RELEASE_DIR = WORK_DIR / "llama-prebuilt"
 BIN_DIR = RELEASE_DIR / f"llama-{RELEASE}"
-CUDA_DIR = RELEASE_DIR / f"cudart-llama-{RELEASE}-bin-ubuntu-cuda-13.4-x64"
+CUDA_VERSION = "12.8"
+CUDA_DIR = RELEASE_DIR / f"cudart-llama-{RELEASE}-bin-ubuntu-cuda-{CUDA_VERSION}-x64"
 SERVER = BIN_DIR / "llama-server"
 API_KEY_FILE = Path(os.environ.get("ODYSSEUS_API_KEY_FILE", "/tmp/odysseus-api-key"))
 MODEL_REPO = "unsloth/Qwen3.6-35B-A3B-GGUF"
@@ -44,12 +45,15 @@ def main() -> None:
         raise RuntimeError(f"Create a private API key file at {API_KEY_FILE} before starting the server.")
 
     RELEASE_DIR.mkdir(parents=True, exist_ok=True)
-    download_and_extract(f"llama-{RELEASE}-bin-ubuntu-cuda-13.4-x64.tar.gz", BIN_DIR)
-    download_and_extract(f"cudart-llama-{RELEASE}-bin-ubuntu-cuda-13.4-x64.tar.gz", CUDA_DIR)
+    download_and_extract(f"llama-{RELEASE}-bin-ubuntu-cuda-{CUDA_VERSION}-x64.tar.gz", BIN_DIR)
+    download_and_extract(f"cudart-llama-{RELEASE}-bin-ubuntu-cuda-{CUDA_VERSION}-x64.tar.gz", CUDA_DIR)
     if not SERVER.is_file():
         raise RuntimeError(f"llama-server was not found at {SERVER} after extracting the release.")
 
     os.environ.setdefault("HF_HOME", str(WORK_DIR / ".cache" / "huggingface"))
+    # CUDA 13.4 PTX from the rolling release is newer than Kaggle's T4 driver supports.
+    # This CUDA 12.8 build works with the driver; disabling PDL avoids the T4 launch fault.
+    os.environ.setdefault("GGML_CUDA_PDL", "0")
     library_dirs = f"{BIN_DIR}:{CUDA_DIR}"
     os.environ["LD_LIBRARY_PATH"] = library_dirs + ":" + os.environ.get("LD_LIBRARY_PATH", "")
 
