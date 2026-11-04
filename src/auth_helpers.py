@@ -28,6 +28,25 @@ def is_direct_loopback_request(request: Request) -> bool:
     return True
 
 
+def resolve_local_bypass_user(request: Request, auth_manager) -> Optional[str]:
+    """Resolve the only admin for an explicitly trusted local-only bypass.
+
+    The bypass is limited to direct loopback requests and a one-user install;
+    forwarded/tunnel requests and ambiguous multi-user installs fail closed.
+    """
+    if os.getenv("LOCALHOST_BYPASS", "false").strip().lower() != "true":
+        return None
+    if not is_direct_loopback_request(request):
+        return None
+    if request.headers.get("sec-fetch-site", "").strip().lower() not in {"none", "same-origin"}:
+        return None
+    users = getattr(auth_manager, "users", {})
+    if not isinstance(users, dict) or len(users) != 1:
+        return None
+    username = next(iter(users))
+    return username if auth_manager.is_admin(username) else None
+
+
 def get_current_user(request: Request) -> Optional[str]:
     """Get current username from request state (set by auth middleware)."""
     return getattr(request.state, 'current_user', None)

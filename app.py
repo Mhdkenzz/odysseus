@@ -87,6 +87,7 @@ import bcrypt as _bcrypt
 from src.app_helpers import abs_join, serve_html_with_nonce
 from src.generated_images import GENERATED_IMAGE_HEADERS, resolve_generated_image_path
 from src.owner_identity import auth_disabled
+from src.auth_helpers import resolve_local_bypass_user
 from starlette.responses import RedirectResponse
 
 # ========= LOGGING =========
@@ -437,12 +438,17 @@ if AUTH_ENABLED:
                     return await call_next(request)
             except Exception as _e:
                 logger.warning("Internal tool auth header check failed", exc_info=_e)
-            # Allow DIRECT localhost requests (internal service calls from
-            # heartbeats etc.). Tunnel/proxy-forwarded requests are excluded by
-            # _is_trusted_loopback so LOCALHOST_BYPASS can't be abused over a
-            # Cloudflare tunnel / reverse proxy. Keep LOCALHOST_BYPASS=false for
-            # network-exposed deployments regardless.
+            # Allow DIRECT localhost requests. When exactly one admin exists,
+            # browser same-origin traffic receives that local identity so it
+            # keeps the existing owner's data; anonymous local service calls
+            # still pass through without a human identity. Tunnel/proxy traffic
+            # is excluded, so keep LOCALHOST_BYPASS=false for shared deployments.
             if LOCALHOST_BYPASS and _is_trusted_loopback(request):
+                local_user = resolve_local_bypass_user(request, auth_manager)
+                if local_user:
+                    request.state.current_user = local_user
+                    request.state.api_token = False
+                    request.state.local_auth_bypass = True
                 return await call_next(request)
             if not auth_manager.is_configured:
                 # No users yet — redirect to login for first-time setup
@@ -1028,7 +1034,7 @@ async def serve_backgrounds(request: Request):
 
 @app.get("/login")
 async def serve_login(request: Request):
-    if not AUTH_ENABLED:
+    if not AUTH_ENABLED or resolve_local_bypass_user(request, auth_manager):
         return RedirectResponse(url="/", status_code=302)
     return serve_html_with_nonce(request, abs_join(BASE_DIR, "static/login.html"))
 

@@ -15,7 +15,7 @@ from pathlib import Path
 from core.atomic_io import atomic_write_json, atomic_write_text
 from core.auth import AuthManager, RESERVED_USERNAMES, SetAdminResult, TOKEN_TTL, username_error
 from src.constants import DEEP_RESEARCH_DIR, MEMORY_FILE, PASSWORD_MIN_LENGTH, SKILLS_DIR
-from src.auth_helpers import _auth_disabled
+from src.auth_helpers import _auth_disabled, resolve_local_bypass_user
 from src.rate_limiter import RateLimiter
 from src.settings_scrub import scrub_settings
 from src import tool_capabilities
@@ -129,7 +129,7 @@ def setup_auth_routes(auth_manager: AuthManager) -> APIRouter:
 
     def _get_current_user(request: Request) -> Optional[str]:
         token = request.cookies.get(SESSION_COOKIE)
-        return auth_manager.get_username_for_token(token)
+        return auth_manager.get_username_for_token(token) or resolve_local_bypass_user(request, auth_manager)
 
     def _require_admin_user(request: Request) -> Optional[str]:
         """Resolve the current user, enforcing admin access.
@@ -231,6 +231,16 @@ def setup_auth_routes(auth_manager: AuthManager) -> APIRouter:
         token = request.cookies.get(SESSION_COOKIE)
         result = auth_manager.status(token)
         result["signup_enabled"] = auth_manager.signup_enabled
+        result["auth_enabled"] = not _auth_disabled()
+        local_bypass_user = resolve_local_bypass_user(request, auth_manager)
+        result["local_bypass"] = bool(local_bypass_user)
+        if local_bypass_user and not result.get("authenticated"):
+            result.update({
+                "authenticated": True,
+                "username": local_bypass_user,
+                "is_admin": auth_manager.is_admin(local_bypass_user),
+                "privileges": auth_manager.get_privileges(local_bypass_user),
+            })
         # Include the caller's effective privileges so the frontend can
         # hide / dim UI controls the user isn't allowed to use. Admins get
         # ADMIN_PRIVILEGES (everything on), regular users get their stored

@@ -1341,9 +1341,15 @@ function initializeEventListeners() {
     userBarSettings.addEventListener('click', () => settingsModule.open());
   }
   if (userBarProfile) {
-    // Clicking the user (avatar + name) jumps straight to the Account tab
-    // instead of landing on whatever was last selected.
-    userBarProfile.addEventListener('click', () => settingsModule.open('account'));
+    // In local single-user mode, the profile control edits the local display
+    // name. Authenticated deployments continue to open the Account tab.
+    userBarProfile.addEventListener('click', () => {
+      if (window._odysseusLocalProfileMode) {
+        window._openLocalDisplayNameDialog?.();
+        return;
+      }
+      settingsModule.open('account');
+    });
   }
   if (userBarAdmin) {
     userBarAdmin.addEventListener('click', () => adminModule.open());
@@ -1353,11 +1359,44 @@ function initializeEventListeners() {
   fetch(`${API_BASE}/api/auth/status`, { credentials: 'same-origin' })
     .then(r => r.json())
     .then(d => {
+      window._odysseusLocalProfileMode = d.auth_enabled === false || d.local_bypass === true;
       window._isAdmin = !!d.is_admin;
       if (d.is_admin && userBarAdmin) userBarAdmin.style.display = '';
       const userBarName = el('user-bar-name');
       const userBarAvatar = el('user-bar-avatar');
-      if (userBarName && d.username) {
+      const setLocalDisplayName = (name) => {
+        const cleanName = String(name || '').trim().slice(0, 64) || 'Local User';
+        if (userBarName) userBarName.textContent = cleanName;
+        if (userBarAvatar) userBarAvatar.textContent = cleanName.charAt(0).toUpperCase();
+      };
+      const nameDialog = el('local-display-name-dialog');
+      const nameForm = el('local-display-name-form');
+      const nameInput = el('local-display-name-input');
+      if (window._odysseusLocalProfileMode) {
+        const savedName = localStorage.getItem('odysseus-local-display-name') || '';
+        setLocalDisplayName(savedName);
+        window._openLocalDisplayNameDialog = () => {
+          if (!nameDialog || !nameInput) return;
+          nameInput.value = localStorage.getItem('odysseus-local-display-name') || '';
+          if (!nameDialog.open) nameDialog.showModal();
+          nameInput.focus();
+        };
+        if (nameForm && nameForm.dataset.bound !== '1') {
+          nameForm.dataset.bound = '1';
+          nameForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const name = nameInput?.value?.trim().slice(0, 64);
+            if (!name) { nameInput?.focus(); return; }
+            localStorage.setItem('odysseus-local-display-name', name);
+            setLocalDisplayName(name);
+            nameDialog?.close();
+          });
+        }
+        if (!savedName) window._openLocalDisplayNameDialog();
+        el('settings-logout-btn')?.closest('.admin-card')?.style.setProperty('display', 'none');
+        el('settings-pw-save')?.closest('.admin-card')?.style.setProperty('display', 'none');
+        el('settings-2fa-card')?.style.setProperty('display', 'none');
+      } else if (userBarName && d.username) {
         let displayName = d.username;
         // Mask email addresses
         if (displayName.includes('@')) {

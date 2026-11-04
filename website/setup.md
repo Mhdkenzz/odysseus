@@ -19,6 +19,13 @@ On first setup, Odysseus creates an admin account (`admin` unless
 For Docker installs, the same line is in `docker compose logs odysseus`.
 Use that for the first login, then change it in **Settings**.
 
+For a one-user install bound to this machine, set `LOCALHOST_BYPASS=true` in
+`.env` and keep `APP_BIND=127.0.0.1`. The sign-in screen is skipped for direct
+loopback requests, and Odysseus asks for a local display name. Click your name
+in the sidebar to change it later. This trusts local programs as you; forwarded
+requests still require login. Keep `LOCALHOST_BYPASS=false` for LAN, proxy, or
+other shared deployments.
+
 Contributing? See [CONTRIBUTING.md](https://github.com/odysseus-dev/odysseus/blob/dev/CONTRIBUTING.md) for setup, testing, and pull request guidelines.
 
 ### Docker (recommended)
